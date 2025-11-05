@@ -5,26 +5,17 @@ import torch
 import os
 from werkzeug.utils import secure_filename
 
-# -----------------------
-# Flask App Configuration
-# -----------------------
 app = Flask(__name__, static_folder="out", static_url_path="/")
 app.config["UPLOAD_FOLDER"] = "uploads"
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# -----------------------
-# Load Models Once
-# -----------------------
-print("🔹 Loading Whisper + Pegasus models...")
+print("Loading Whisper + Pegasus models...")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 whisper_model = whisper.load_model("base")
 tokenizer = AutoTokenizer.from_pretrained("google/pegasus-arxiv")
 pegasus_model = AutoModelForSeq2SeqLM.from_pretrained("google/pegasus-arxiv").to(device)
-print("✅ Models ready!")
+print("Models ready!")
 
-# -----------------------
-# Helper Functions
-# -----------------------
 def transcribe_audio(audio_path):
     """Transcribe audio file using Whisper"""
     result = whisper_model.transcribe(audio_path)
@@ -59,9 +50,6 @@ def process_audio(audio_path):
     summaries = [summarize_text(chunk["text"]) for chunk in chunks]
     return " ".join(summaries)
 
-# -----------------------
-# API Endpoint
-# -----------------------
 @app.route("/api/summarize", methods=["POST"])
 def summarize_endpoint():
     """POST audio file → returns summary"""
@@ -80,9 +68,6 @@ def summarize_endpoint():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# -----------------------
-# Serve Next.js Frontend
-# -----------------------
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_frontend(path):
@@ -91,8 +76,5 @@ def serve_frontend(path):
     else:
         return send_from_directory(app.static_folder, "index.html")
 
-# -----------------------
-# Run App
-# -----------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
