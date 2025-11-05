@@ -12,7 +12,7 @@ pip install openai-whisper datasets jiwer torchaudio
 import whisper
 
 # load model (base or small for speed)
-whisper_model = whisper.load_model("base")
+whisper_model = whisper.load_model("small")
 
 from transformers import PegasusTokenizer, PegasusForConditionalGeneration, AutoTokenizer,AutoModelForSeq2SeqLM
 import torch
