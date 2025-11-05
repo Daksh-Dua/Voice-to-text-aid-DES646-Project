@@ -7,12 +7,10 @@ Original file is located at
     https://colab.research.google.com/drive/1ylFrnx2Rd0u8gOkEsdi9K1okD_S27G8a
 """
 
-pip install openai-whisper datasets jiwer torchaudio
-
 import whisper
 
 # load model (base or small for speed)
-whisper_model = whisper.load_model("small")
+whisper_model = whisper.load_model("base")
 
 from transformers import PegasusTokenizer, PegasusForConditionalGeneration, AutoTokenizer,AutoModelForSeq2SeqLM
 import torch
