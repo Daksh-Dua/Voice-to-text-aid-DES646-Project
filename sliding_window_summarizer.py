@@ -21,15 +21,44 @@ pipe = pipeline("summarization", model="google/pegasus-arxiv")
 tokenizer = AutoTokenizer.from_pretrained("google/pegasus-arxiv")
 model = AutoModelForSeq2SeqLM.from_pretrained("google/pegasus-arxiv")
 
-AUDIO_PATH = "lecture.mp3"   # change this to your file path
+AUDIO_PATH = "lecture.mp3"   
 CHUNK_WORDS = 400
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+whisper_model = whisper.load_model("base")
+
 def transcribe_audio(AUDIO_PATH):
-  print("Transcribing audio...")
-  result = whisper_model.transcribe(AUDIO_PATH)
-  segments = result["segments"]
-  return segments
+    print("Transcribing audio with correct spacing...")
+    result = whisper_model.transcribe(AUDIO_PATH, verbose=False, condition_on_previous_text=False)
+
+    tokenizer = whisper.tokenizer.get_tokenizer(multilingual=True)
+    segments = []
+
+    for seg in result["segments"]:
+        tokens = seg.get("tokens", [])
+        if tokens:
+            clean_text = tokenizer.decode(tokens).strip()
+        else:
+            clean_text = " ".join(seg["text"].replace("\n", " ").split())
+        segments.append({
+            "start": seg["start"],
+            "end": seg["end"],
+            "text": clean_text
+        })
+
+    result["text"] = " ".join([s["text"] for s in segments])
+    return segments
+
+
+    for seg in segments:
+        seg["text"] = seg["text"].strip()
+
+
+    full_text = " ".join(seg["text"] for seg in segments)
+    result["text"] = " ".join(full_text.split())  
+
+    return segments
+
 
 def chunk_segments(segments, chunk_size=400):
     chunks = []
@@ -40,16 +69,16 @@ def chunk_segments(segments, chunk_size=400):
         text = seg["text"].strip()
         words = text.split()
         word_count += len(words)
-        current_chunk["text"] += " " + text
+        current_chunk["text"] = (current_chunk["text"] + " " + text).strip()
 
-        # Once chunk reaches ~chunk_size words, start a new one
+        
         if word_count >= chunk_size:
             current_chunk["end"] = seg["end"]
             chunks.append(current_chunk)
             current_chunk = {"start": seg["start"], "text": ""}
             word_count = 0
 
-    # add last chunk if not empty
+
     if current_chunk["text"].strip():
         current_chunk["end"] = segments[-1]["end"]
         chunks.append(current_chunk)

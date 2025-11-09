@@ -20,7 +20,7 @@ export function AudioUpload({ onUploaded }: AudioUploadProps) {
 
   const handleFile = useCallback(
     async (file: File) => {
-      // Validate file type
+
       const validTypes = [
         "audio/mpeg",
         "audio/wav",
@@ -35,7 +35,6 @@ export function AudioUpload({ onUploaded }: AudioUploadProps) {
         return;
       }
 
-      // Validate file size (max 500MB)
       if (file.size > 500 * 1024 * 1024) {
         setError("File size too large. Maximum size is 500MB.");
         return;
@@ -46,7 +45,7 @@ export function AudioUpload({ onUploaded }: AudioUploadProps) {
       setProgress(0);
 
       try {
-        // Simulate upload progress
+
         const progressInterval = setInterval(() => {
           setProgress((prev) => {
             if (prev >= 90) {
@@ -57,14 +56,19 @@ export function AudioUpload({ onUploaded }: AudioUploadProps) {
           });
         }, 200);
 
-        // Mock API call
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch("/api/upload", {
+        /*const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });*/
+
+        const response = await fetch("http://127.0.0.1:5001/api/summarize", {
           method: "POST",
           body: formData,
         });
+
 
         clearInterval(progressInterval);
         setProgress(100);
@@ -74,10 +78,11 @@ export function AudioUpload({ onUploaded }: AudioUploadProps) {
         }
 
         const data = await response.json();
+        console.log("Summary:", data.summary);
+        alert("Summary generated! Check console for output.");
         const fileMeta = { name: file.name, size: file.size, type: file.type };
         onUploaded?.(fileMeta);
 
-        // Navigate to session view after upload completes
         if (data.sessionId) {
           setTimeout(() => {
             router.push(`/library/${data.sessionId}`);
